@@ -65,7 +65,7 @@ StreamProvider 专门用作提供（provide）一条 Single Stream。我在这�
 
 ## 优雅地处理多个 Provider ---- MultiProvider
 
-![QQ20200424-145613](/Users/mahua/workspace/Flutter/flutternote/QQ20200424-145613.png)
+![QQ20200424-145613](https://github.com/TomMi23/flutternote/blob/master/images/QQ20200424-145613.png)
 
 
 ## Provider 是如何做到状态共享的
