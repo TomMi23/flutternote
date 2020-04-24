@@ -28,7 +28,7 @@ class ChangeNotifier implements Listenable
 
 ChangeNotifierProvider 则更为简单，它能够对子节点提供一个 继承 / 混入 / 实现 了 ChangeNotifier 的类。通常我们只需要在 Model 中 with ChangeNotifier ，然后在需要刷新状态的时候调用 notifyListeners 即可。
 
-![image-20200424135754371](/Users/mahua/Library/Application Support/typora-user-images/image-20200424135754371.png)
+![image](https://gitee.com/mizi23/FlutterNote/raw/master/images/1.png)
 
 那么 ChangeNotifierProvider 和 ListenableProvider 究竟**区别在哪呢**，ChangeNotifierProvider 会在你需要的时候，自动调用其 _disposer 方法。
 
@@ -65,7 +65,7 @@ StreamProvider 专门用作提供（provide）一条 Single Stream。我在这�
 
 ## 优雅地处理多个 Provider ---- MultiProvider
 
-![image](https://github.com/TomMi23/flutternote/blob/master/images/1.png)
+![image](https://gitee.com/mizi23/FlutterNote/raw/master/images/2.png)
 
 
 ## Provider 是如何做到状态共享的
