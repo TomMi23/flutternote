@@ -30,6 +30,7 @@ ChangeNotifierProvider 则更为简单，它能够对子节点提供一个 继�
 
 ![image](https://gitee.com/mizi23/FlutterNote/raw/master/images/1.png)
 
+
 那么 ChangeNotifierProvider 和 ListenableProvider 究竟**区别在哪呢**，ChangeNotifierProvider 会在你需要的时候，自动调用其 _disposer 方法。
 
 static void _disposer(BuildContext context, ChangeNotifier notifier) => notifier?.dispose();
