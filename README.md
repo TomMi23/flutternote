@@ -89,13 +89,13 @@ StreamProvider 专门用作提供（provide）一条 Single Stream。我在这�
 
 StatefulWidget通过State保存在生命周期中可能发生变化的数据集,StatefulWidget 的 State 帮我们实现了在 Widget 的跨帧绘制 ，也就是在每次 Widget 重绘的时候，通过 State 重新赋予 Widget 需要的绘制信息。
 
-![1](https://gitee.com/mizi23/FlutterNote/blob/master/images/state/1.png)
+![image](https://github.com/TomMi23/flutternote/blob/master/images/state/1.png)
 
-![2](https://gitee.com/mizi23/FlutterNote/blob/master/images/state/2.png)
+![image](https://github.com/TomMi23/flutternote/blob/master/images/state/2.png)
 
 statefulWidget通过使用createElement（）创建一个StatefulElement来管理statefulWidget，在statefulElement中保存state。
 
-![3](https://gitee.com/mizi23/FlutterNote/blob/master/images/state/3.png)
+![image](https://github.com/TomMi23/flutternote/blob/master/images/state/3.png)
 
 当我们调用setState()时就会触发StateElement的update（）将改变后的新Widget重新赋给state的_widget之后在下一帧 WidgetsBinding.drawFrame 重新绘制，达到更新界面的效果。
 
