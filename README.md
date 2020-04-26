@@ -84,4 +84,20 @@ StreamProvider 专门用作提供（provide）一条 Single Stream。我在这�
 
   **<font color=red>全局状态需要放在顶层 MaterialApp 之上，优先初始化，以便在 Navigator 以及 BuildContex控制全局状态</font>**
 
+## State
+在Flutter中一切皆组件，也就是Flutter中的Widget。组件又大致可以被分为两类：statelessWidget和statefulWidget。<font color=red>其中有状态的Widget StatefulWidget和StatelessWidget最大的区别就在于StatefulWidget可以通过setState()改变数据使页面动态的更新。</font>
+
+StatefulWidget通过State保存在生命周期中可能发生变化的数据集,StatefulWidget 的 State 帮我们实现了在 Widget 的跨帧绘制 ，也就是在每次 Widget 重绘的时候，通过 State 重新赋予 Widget 需要的绘制信息。
+
+![1](/Users/mahua/workspace/Flutter/flutternote/images/state/1.png)
+
+![2](/Users/mahua/workspace/Flutter/flutternote/images/state/2.png)
+
+statefulWidget通过使用createElement（）创建一个StatefulElement来管理statefulWidget，在statefulElement中保存state。
+
+![3](/Users/mahua/workspace/Flutter/flutternote/images/state/3.png)
+
+当我们调用setState()时就会触发StateElement的update（）将改变后的新Widget重新赋给state的_widget之后在下一帧 WidgetsBinding.drawFrame 重新绘制，达到更新界面的效果。
+
+###  [参考资料 Flutter中的State和状态管理框架Provider学习记录](https://blog.csdn.net/qq_42848018/article/details/103872851?depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-34&utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-34)
 
