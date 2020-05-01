@@ -198,3 +198,179 @@ class CouterState extends State<CouterWidgetState> {
 
 ![image](https://github.com/TomMi23/flutternote/blob/master/images/StatefulWidget/1.png)
 
+
+
+# 获取SHA1方法
+
+https://blog.csdn.net/w13576267399/article/details/83007537
+
+开发版SHA1.
+
+在Terminal 中输入 keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 然后就能看到下图结果，从中获取到开发版的SHA1值 （如果提示要输入密码，那就是默认密码 android）
+
+
+
+ 获取正式版的SHA1
+
+还是在 Terminal 中 ，输入 **keytool -list -v -keystore** 后面加个空格 再跟上你打正式包后的 jks 文件完整地址，文件地址获取如下图（文件右键后点击显示简介 进入下图）
+
+#  WidgetsFlutterBinding.ensureInitialized()干什么了？
+
+## WidgetsFlutterBinding是什么？
+
+WidgetsFlutterBinding是什么，从这个类的名称来看，是把Widget和Flutter绑定在一起的意思。
+~~~ dart
+class WidgetsFlutterBinding extends BindingBase with GestureBinding, ServicesBinding, SchedulerBinding, PaintingBinding, SemanticsBinding, RendererBinding, WidgetsBinding {
+  static WidgetsBinding ensureInitialized() {
+    if (WidgetsBinding.instance == null)
+      WidgetsFlutterBinding();
+    return WidgetsBinding.instance;
+  }
+}
+~~~
+
+这个类继承自BindingBase并且混入（Mixin）了很多其他类，看名称都是不同功能的绑定。而静态函数ensureInitialized()所做的就是返回一个WidgetsBinding.instance单例。
+
+混入的那些各种绑定类也都是继承自抽象类BindingBase的
+
+~~~ dart
+abstract class BindingBase {
+    BindingBase() {
+        ...
+        initInstances();
+        ...
+    }
+    ...
+    ui.Window get window => ui.window;
+}
+~~~
+关于抽象类BindingBase，你需要了解两个地方，一个是在其构造的时候会调用函数initInstances()。这个函数会由其子类，也就是上面说那些各种混入（Mixin）的绑定类各自实现，具体的初始化都是在其内部实现的。另一个就是BindingBase有一个getter，返回的是window。
+
+这些个绑定其实就是对window的封装？来，让我们挨个看一下这几个绑定类在调用initInstances()的时候做了什么的吧。
+
+- 第一个是GestureBinding。手势绑定。
+~~~ dart
+mixin GestureBinding on BindingBase implements HitTestable, HitTestDispatcher, HitTestTarget {
+  @override
+  void initInstances() {
+    super.initInstances();
+    _instance = this;
+    window.onPointerDataPacket = _handlePointerDataPacket;
+  }
+~~~
+在调用initInstances()的时候，主要做的事情就是给window设置了一个手势处理的回调函数。所以这个绑定主要是负责管理手势事件的。
+
+- 第二个是ServicesBinding。服务绑定
+~~~ dart
+mixin ServicesBinding on BindingBase {
+ @override
+ void initInstances() {
+   super.initInstances();
+   _instance = this;
+   window
+     ..onPlatformMessage = BinaryMessages.handlePlatformMessage;
+   initLicenses();
+ }
+~~~
+这个绑定主要是给window设置了处理Platform Message的回调。
+
+- 第三个是SchedulerBinding。调度绑定。
+~~~ dart
+mixin SchedulerBinding on BindingBase, ServicesBinding {
+@override
+void initInstances() {
+  super.initInstances();
+  _instance = this;
+  window.onBeginFrame = _handleBeginFrame;
+  window.onDrawFrame = _handleDrawFrame;
+  SystemChannels.lifecycle.setMessageHandler(_handleLifecycleMessage);
+}
+~~~ 
+这个绑定主要是给window设置了onBeginFrame和onDrawFrame的回调，回忆一下上一篇文章讲渲染流水线的时候，当Vsync信号到来的时候engine会回调Flutter的来启动渲染流程，这两个回调就是在SchedulerBinding管理的。
+
+- 第四个是PaintingBinding。绘制绑定。
+~~~ dart
+mixin PaintingBinding on BindingBase, ServicesBinding {
+@override
+void initInstances() {
+  super.initInstances();
+  _instance = this;
+  _imageCache = createImageCache();
+}
+~~~ 
+这个绑定只是创建了个图片缓存，就不细说了。
+
+- 第五个是SemanticsBinding。辅助功能绑定。
+~~~ dart
+mixin SemanticsBinding on BindingBase {
+@override
+void initInstances() {
+  super.initInstances();
+  _instance = this;
+  _accessibilityFeatures = window.accessibilityFeatures;
+}
+~~~
+
+这个绑定管理辅助功能，就不细说了。
+
+- 第六个是RendererBinding。渲染绑定。这是比较重要的一个类。
+~~~ dart 
+mixin RendererBinding on BindingBase, ServicesBinding, SchedulerBinding, GestureBinding, SemanticsBinding, HitTestable {
+ @override
+ void initInstances() {
+   super.initInstances();
+   _instance = this;
+   _pipelineOwner = PipelineOwner(
+     onNeedVisualUpdate: ensureVisualUpdate,
+     onSemanticsOwnerCreated: _handleSemanticsOwnerCreated,
+     onSemanticsOwnerDisposed: _handleSemanticsOwnerDisposed,
+   );
+   window
+     ..onMetricsChanged = handleMetricsChanged
+     ..onTextScaleFactorChanged = handleTextScaleFactorChanged
+     ..onPlatformBrightnessChanged = handlePlatformBrightnessChanged
+     ..onSemanticsEnabledChanged = _handleSemanticsEnabledChanged
+     ..onSemanticsAction = _handleSemanticsAction;
+   initRenderView();
+   _handleSemanticsEnabledChanged();
+   assert(renderView != null);
+   addPersistentFrameCallback(_handlePersistentFrameCallback);
+   _mouseTracker = _createMouseTracker();
+ }
+~~~
+这个绑定是负责管理渲染流程的，初始化的时候做的事情也比较多。
+首先是实例化了一个PipelineOwner类。这个类负责管理驱动我们之前说的渲染流水线。随后给window设置了一系列回调函数，处理屏幕尺寸变化，亮度变化等。接着调用initRenderView()。
+
+~~~ dart
+  void initRenderView() {
+   assert(renderView == null);
+   renderView = RenderView(configuration: createViewConfiguration(), window: window);
+   renderView.scheduleInitialFrame();
+ }
+~~~
+这个函数实例化了一个RenderView类。RenderView继承自RenderObject。我们都知道Flutter框架中存在这一个渲染树（render tree）。这个RenderView就是渲染树（render tree）的根节点，这一点可以通过打开"Flutter Inspector"看到，在"Render Tree"这个Tab下，最根部的红框里就是这个RenderView。
+
+最后调用addPersistentFrameCallback添加了一个回调函数。请大家记住这个回调，渲染流水线的主要阶段都会在这个回调里启动。
+
+- 第七个是WidgetsBinding，组件绑定。
+~~~ dart
+mixin WidgetsBinding on BindingBase, SchedulerBinding, GestureBinding, RendererBinding, SemanticsBinding {
+  @override
+  void initInstances() {
+    super.initInstances();
+    _instance = this;
+    buildOwner.onBuildScheduled = _handleBuildScheduled;
+    window.onLocaleChanged = handleLocaleChanged;
+    window.onAccessibilityFeaturesChanged = handleAccessibilityFeaturesChanged;
+    SystemChannels.navigation.setMethodCallHandler(_handleNavigationInvocation);
+    SystemChannels.system.setMessageHandler(_handleSystemMessage);
+  }
+~~~
+
+这个绑定的初始化先给buildOwner设置了个onBuildScheduled回调，还记得渲染绑定里初始化的时候实例化了一个PipelineOwner吗？这个BuildOwner是在组件绑定里实例化的。它主要负责管理Widget的重建，记住这两个"owner"。他们将会Flutter框架里的核心类。接着给window设置了两个回调，因为和渲染关系不大，就不细说了。最后设置SystemChannels.navigation和SystemChannels.system的消息处理函数。这两个回调一个是专门处理路由的，另一个是处理一些系统事件，比如剪贴板，震动反馈，系统音效等等。
+至此，WidgetsFlutterBinding.ensureInitialized()就跑完了，总体上来讲是把window提供的API分别封装到不同的Binding里。我们需要重点关注的是SchedulerBinding，RendererBinding和WidgetsBinding。这3个是渲染流水线的重要存在。
+
+https://juejin.im/post/5c7e3e70e51d4541c5373143 参看这文章
+
+
+
